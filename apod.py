@@ -2,7 +2,8 @@ import requests
 import re
 import shutil
 from PIL import Image, ImageFont, ImageDraw
-import textwrap
+import ctypes
+import os
 
 APOD = 'http://apod.nasa.gov/apod/astropix.html'
 APOD_BASE = 'http://apod.nasa.gov/apod/'
@@ -154,12 +155,6 @@ def add_title_and_explanation(img, title, explanation):
 
 	return img
 
-def prepare_image(old_fname, new_fname, title, explanation):
-	img = Image.open(old_fname)
-	img = resize_and_pad(img)
-	img = add_title_and_explanation(img, title, explanation)
-	img.save(new_fname)
-
 #get various bits of info relating to the box
 #maybe make this smarter?
 def get_box_info():
@@ -170,9 +165,21 @@ def get_box_info():
 	line_spacing = 2
 	return width, x_margin, y_margin, space_under_title, line_spacing
 
+def prepare_image(old_fname, new_fname, title, explanation):
+	img = Image.open(old_fname)
+	img = resize_and_pad(img)
+	img = add_title_and_explanation(img, title, explanation)
+	img.save(new_fname)
+
+	#set the desktop background
+	#THIS ONLY WORKS ON WINDOWS RIGHT NOW!
+	SPI_SETDESKWALLPAPER = 20
+	abs_img_path = os.path.abspath(new_fname)
+	ctypes.windll.user32.SystemParametersInfoW(SPI_SETDESKWALLPAPER, 0, abs_img_path, 0)
 
 h = get_html()
 title = get_title(h)
 explanation = get_explanation(h)
 get_img(h)
+#might want to save with a smarter filename at some point, e.g. the date of the picture
 prepare_image('temp.jpg', 'new.png', title, explanation)
